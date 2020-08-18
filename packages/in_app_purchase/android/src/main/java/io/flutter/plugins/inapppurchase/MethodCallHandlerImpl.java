@@ -120,7 +120,7 @@ class MethodCallHandlerImpl
         break;
       case InAppPurchasePlugin.MethodNames.LAUNCH_BILLING_FLOW:
         launchBillingFlow(
-            (String) call.argument("sku"), (String) call.argument("accountId"), result);
+            (String) call.argument("sku"), (String) call.argument("oldSku"), (String) call.argument("accountId"), result);
         break;
       case InAppPurchasePlugin.MethodNames.QUERY_PURCHASES:
         queryPurchases((String) call.argument("skuType"), result);
@@ -189,7 +189,7 @@ class MethodCallHandlerImpl
   }
 
   private void launchBillingFlow(
-      String sku, @Nullable String accountId, MethodChannel.Result result) {
+      String sku, @Nullable String oldSku, @Nullable String accountId, MethodChannel.Result result) {
     if (billingClientError(result)) {
       return;
     }
@@ -217,6 +217,9 @@ class MethodCallHandlerImpl
         BillingFlowParams.newBuilder().setSkuDetails(skuDetails);
     if (accountId != null && !accountId.isEmpty()) {
       paramsBuilder.setAccountId(accountId);
+    }
+    if (oldSku != null) {
+      paramsBuilder.setOldSku(oldSku);
     }
     result.success(
         Translator.fromBillingResult(

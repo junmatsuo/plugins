@@ -7,6 +7,7 @@ import 'package:in_app_purchase/src/billing_client_wrappers/enum_converters.dart
 import 'package:in_app_purchase/src/billing_client_wrappers/purchase_wrapper.dart';
 import 'package:in_app_purchase/src/store_kit_wrappers/enum_converters.dart';
 import 'package:in_app_purchase/src/store_kit_wrappers/sk_payment_transaction_wrappers.dart';
+
 import './in_app_purchase_connection.dart';
 import './product_details.dart';
 
@@ -52,9 +53,7 @@ class PurchaseVerificationData {
   final IAPSource source;
 
   PurchaseVerificationData(
-      {@required this.localVerificationData,
-      @required this.serverVerificationData,
-      @required this.source});
+      {@required this.localVerificationData, @required this.serverVerificationData, @required this.source});
 }
 
 enum PurchaseStatus {
@@ -76,10 +75,7 @@ enum PurchaseStatus {
 
 /// The parameter object for generating a purchase.
 class PurchaseParam {
-  PurchaseParam(
-      {@required this.productDetails,
-      this.applicationUserName,
-      this.sandboxTesting});
+  PurchaseParam({@required this.productDetails, this.applicationUserName, this.sandboxTesting, this.oldSku});
 
   /// The product to create payment for.
   ///
@@ -96,6 +92,10 @@ class PurchaseParam {
 
   /// The 'sandboxTesting' is only available on iOS, set it to `true` for testing in AppStore's sandbox environment. The default value is `false`.
   final bool sandboxTesting;
+
+  /// The 'oldSku' is an optional id of the SKU that the user is upgrading or downgrading from Google Play Store.
+  /// It's only used on Android.
+  final String oldSku;
 }
 
 /// Represents the transaction details of a purchase.
@@ -129,8 +129,7 @@ class PurchaseDetails {
   PurchaseStatus get status => _status;
   set status(PurchaseStatus status) {
     if (_platform == _kPlatformIOS) {
-      if (status == PurchaseStatus.purchased ||
-          status == PurchaseStatus.error) {
+      if (status == PurchaseStatus.purchased || status == PurchaseStatus.error) {
         _pendingCompletePurchase = true;
       }
     }
@@ -180,8 +179,7 @@ class PurchaseDetails {
   });
 
   /// Generate a [PurchaseDetails] object based on an iOS [SKTransactionWrapper] object.
-  PurchaseDetails.fromSKTransaction(
-      SKPaymentTransactionWrapper transaction, String base64EncodedReceipt)
+  PurchaseDetails.fromSKTransaction(SKPaymentTransactionWrapper transaction, String base64EncodedReceipt)
       : this.purchaseID = transaction.transactionIdentifier,
         this.productID = transaction.payment.productIdentifier,
         this.verificationData = PurchaseVerificationData(
@@ -194,8 +192,7 @@ class PurchaseDetails {
         this.skPaymentTransaction = transaction,
         this.billingClientPurchase = null,
         _platform = _kPlatformIOS {
-    status = SKTransactionStatusConverter()
-        .toPurchaseStatus(transaction.transactionState);
+    status = SKTransactionStatusConverter().toPurchaseStatus(transaction.transactionState);
     if (status == PurchaseStatus.error) {
       error = IAPError(
         source: IAPSource.AppStore,

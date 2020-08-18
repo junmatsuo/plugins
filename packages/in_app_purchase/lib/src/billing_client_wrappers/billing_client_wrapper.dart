@@ -3,20 +3,20 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'package:flutter/services.dart';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:json_annotation/json_annotation.dart';
+
 import '../../billing_client_wrappers.dart';
 import '../channel.dart';
+import 'enum_converters.dart';
 import 'purchase_wrapper.dart';
 import 'sku_details_wrapper.dart';
-import 'enum_converters.dart';
 
 @visibleForTesting
-const String kOnPurchasesUpdated =
-    'PurchasesUpdatedListener#onPurchasesUpdated(int, List<Purchase>)';
-const String _kOnBillingServiceDisconnected =
-    'BillingClientStateListener#onBillingServiceDisconnected()';
+const String kOnPurchasesUpdated = 'PurchasesUpdatedListener#onPurchasesUpdated(int, List<Purchase>)';
+const String _kOnBillingServiceDisconnected = 'BillingClientStateListener#onBillingServiceDisconnected()';
 
 /// Callback triggered by Play in response to purchase activity.
 ///
@@ -70,8 +70,7 @@ class BillingClient {
   /// Calls
   /// [`BillingClient#isReady()`](https://developer.android.com/reference/com/android/billingclient/api/BillingClient.html#isReady())
   /// to get the ready status of the BillingClient instance.
-  Future<bool> isReady() async =>
-      await channel.invokeMethod<bool>('BillingClient#isReady()');
+  Future<bool> isReady() async => await channel.invokeMethod<bool>('BillingClient#isReady()');
 
   /// Enable the [BillingClientWrapper] to handle pending purchases.
   ///
@@ -96,20 +95,15 @@ class BillingClient {
   /// This triggers the creation of a new `BillingClient` instance in Java if
   /// one doesn't already exist.
   Future<BillingResultWrapper> startConnection(
-      {@required
-          OnBillingServiceDisconnected onBillingServiceDisconnected}) async {
-    assert(_enablePendingPurchases,
-        'enablePendingPurchases() must be called before calling startConnection');
-    List<Function> disconnectCallbacks =
-        _callbacks[_kOnBillingServiceDisconnected] ??= [];
+      {@required OnBillingServiceDisconnected onBillingServiceDisconnected}) async {
+    assert(_enablePendingPurchases, 'enablePendingPurchases() must be called before calling startConnection');
+    List<Function> disconnectCallbacks = _callbacks[_kOnBillingServiceDisconnected] ??= [];
     disconnectCallbacks.add(onBillingServiceDisconnected);
-    return BillingResultWrapper.fromJson(await channel
-        .invokeMapMethod<String, dynamic>(
-            "BillingClient#startConnection(BillingClientStateListener)",
-            <String, dynamic>{
-          'handle': disconnectCallbacks.length - 1,
-          'enablePendingPurchases': _enablePendingPurchases
-        }));
+    return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
+        "BillingClient#startConnection(BillingClientStateListener)", <String, dynamic>{
+      'handle': disconnectCallbacks.length - 1,
+      'enablePendingPurchases': _enablePendingPurchases
+    }));
   }
 
   /// Calls
@@ -138,21 +132,23 @@ class BillingClient {
       'skuType': SkuTypeConverter().toJson(skuType),
       'skusList': skusList
     };
-    return SkuDetailsResponseWrapper.fromJson(await channel.invokeMapMethod<
-            String, dynamic>(
-        'BillingClient#querySkuDetailsAsync(SkuDetailsParams, SkuDetailsResponseListener)',
-        arguments));
+    return SkuDetailsResponseWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
+        'BillingClient#querySkuDetailsAsync(SkuDetailsParams, SkuDetailsResponseListener)', arguments));
   }
 
   /// Attempt to launch the Play Billing Flow for a given [skuDetails].
   ///
   /// The [skuDetails] needs to have already been fetched in a [querySkuDetails]
-  /// call. The [accountId] is an optional hashed string associated with the user
+  /// call.
+  ///
+  /// The [accountId] is an optional hashed string associated with the user
   /// that's unique to your app. It's used by Google to detect unusual behavior.
   /// Do not pass in a cleartext [accountId], use your developer ID, or use the
   /// user's Google ID for this field.
   ///
-  /// Calling this attemps to show the Google Play purchase UI. The user is free
+  /// The [oldSku] is an optional id of the SKU that the user is upgrading or downgrading from Google Play Store.
+  ///
+  /// Calling this attempts to show the Google Play purchase UI. The user is free
   /// to complete the transaction there.
   ///
   /// This method returns a [BillingResultWrapper] representing the initial attempt
@@ -167,17 +163,15 @@ class BillingClient {
   /// skuDetails](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.Builder.html#setskudetails)
   /// and [the given
   /// accountId](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.Builder.html#setAccountId(java.lang.String)).
-  Future<BillingResultWrapper> launchBillingFlow(
-      {@required String sku, String accountId}) async {
+  Future<BillingResultWrapper> launchBillingFlow({@required String sku, String oldSku, String accountId}) async {
     assert(sku != null);
     final Map<String, dynamic> arguments = <String, dynamic>{
       'sku': sku,
+      'oldSku': oldSku,
       'accountId': accountId,
     };
-    return BillingResultWrapper.fromJson(
-        await channel.invokeMapMethod<String, dynamic>(
-            'BillingClient#launchBillingFlow(Activity, BillingFlowParams)',
-            arguments));
+    return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
+        'BillingClient#launchBillingFlow(Activity, BillingFlowParams)', arguments));
   }
 
   /// Fetches recent purchases for the given [SkuType].
@@ -193,10 +187,8 @@ class BillingClient {
   /// skutype)`](https://developer.android.com/reference/com/android/billingclient/api/BillingClient#querypurchases).
   Future<PurchasesResultWrapper> queryPurchases(SkuType skuType) async {
     assert(skuType != null);
-    return PurchasesResultWrapper.fromJson(await channel
-        .invokeMapMethod<String, dynamic>(
-            'BillingClient#queryPurchases(String)',
-            <String, dynamic>{'skuType': SkuTypeConverter().toJson(skuType)}));
+    return PurchasesResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
+        'BillingClient#queryPurchases(String)', <String, dynamic>{'skuType': SkuTypeConverter().toJson(skuType)}));
   }
 
   /// Fetches purchase history for the given [SkuType].
@@ -214,8 +206,7 @@ class BillingClient {
   /// listener)`](https://developer.android.com/reference/com/android/billingclient/api/BillingClient#querypurchasehistoryasync).
   Future<PurchasesHistoryResult> queryPurchaseHistory(SkuType skuType) async {
     assert(skuType != null);
-    return PurchasesHistoryResult.fromJson(await channel.invokeMapMethod<String,
-            dynamic>(
+    return PurchasesHistoryResult.fromJson(await channel.invokeMapMethod<String, dynamic>(
         'BillingClient#queryPurchaseHistoryAsync(String, PurchaseHistoryResponseListener)',
         <String, dynamic>{'skuType': SkuTypeConverter().toJson(skuType)}));
   }
@@ -229,16 +220,13 @@ class BillingClient {
   /// The `developerPayload` is the developer data associated with the purchase to be consumed, it defaults to null.
   ///
   /// This wraps [`BillingClient#consumeAsync(String, ConsumeResponseListener)`](https://developer.android.com/reference/com/android/billingclient/api/BillingClient.html#consumeAsync(java.lang.String,%20com.android.billingclient.api.ConsumeResponseListener))
-  Future<BillingResultWrapper> consumeAsync(String purchaseToken,
-      {String developerPayload}) async {
+  Future<BillingResultWrapper> consumeAsync(String purchaseToken, {String developerPayload}) async {
     assert(purchaseToken != null);
-    return BillingResultWrapper.fromJson(await channel
-        .invokeMapMethod<String, dynamic>(
-            'BillingClient#consumeAsync(String, ConsumeResponseListener)',
-            <String, String>{
-          'purchaseToken': purchaseToken,
-          'developerPayload': developerPayload,
-        }));
+    return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
+        'BillingClient#consumeAsync(String, ConsumeResponseListener)', <String, String>{
+      'purchaseToken': purchaseToken,
+      'developerPayload': developerPayload,
+    }));
   }
 
   /// Acknowledge an in-app purchase.
@@ -261,11 +249,9 @@ class BillingClient {
   /// The `developerPayload` is the developer data associated with the purchase to be consumed, it defaults to null.
   ///
   /// This wraps [`BillingClient#acknowledgePurchase(String, AcknowledgePurchaseResponseListener)`](https://developer.android.com/reference/com/android/billingclient/api/BillingClient.html#acknowledgePurchase(com.android.billingclient.api.AcknowledgePurchaseParams,%20com.android.billingclient.api.AcknowledgePurchaseResponseListener))
-  Future<BillingResultWrapper> acknowledgePurchase(String purchaseToken,
-      {String developerPayload}) async {
+  Future<BillingResultWrapper> acknowledgePurchase(String purchaseToken, {String developerPayload}) async {
     assert(purchaseToken != null);
-    return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String,
-            dynamic>(
+    return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
         'BillingClient#(AcknowledgePurchaseParams params, (AcknowledgePurchaseParams, AcknowledgePurchaseResponseListener)',
         <String, String>{
           'purchaseToken': purchaseToken,
@@ -279,10 +265,8 @@ class BillingClient {
       case kOnPurchasesUpdated:
         // The purchases updated listener is a singleton.
         assert(_callbacks[kOnPurchasesUpdated].length == 1);
-        final PurchasesUpdatedListener listener =
-            _callbacks[kOnPurchasesUpdated].first;
-        listener(PurchasesResultWrapper.fromJson(
-            call.arguments.cast<String, dynamic>()));
+        final PurchasesUpdatedListener listener = _callbacks[kOnPurchasesUpdated].first;
+        listener(PurchasesResultWrapper.fromJson(call.arguments.cast<String, dynamic>()));
         break;
       case _kOnBillingServiceDisconnected:
         final int handle = call.arguments['handle'];
