@@ -220,6 +220,7 @@ class MethodCallHandlerImpl
     }
     if (oldSku != null) {
       paramsBuilder.setOldSku(oldSku);
+      paramsBuilder.setReplaceSkusProrationMode(BillingFlowParams.ProrationMode.DEFERRED);
     }
     result.success(
         Translator.fromBillingResult(
