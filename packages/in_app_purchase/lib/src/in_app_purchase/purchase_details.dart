@@ -75,7 +75,8 @@ enum PurchaseStatus {
 
 /// The parameter object for generating a purchase.
 class PurchaseParam {
-  PurchaseParam({@required this.productDetails, this.applicationUserName, this.sandboxTesting, this.oldSku});
+  PurchaseParam(
+      {@required this.productDetails, this.applicationUserName, this.sandboxTesting, this.oldSku, this.isDown});
 
   /// The product to create payment for.
   ///
@@ -96,6 +97,8 @@ class PurchaseParam {
   /// The 'oldSku' is an optional id of the SKU that the user is upgrading or downgrading from Google Play Store.
   /// It's only used on Android.
   final String oldSku;
+
+  final String isDown;
 }
 
 /// Represents the transaction details of a purchase.

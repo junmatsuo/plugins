@@ -163,12 +163,14 @@ class BillingClient {
   /// skuDetails](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.Builder.html#setskudetails)
   /// and [the given
   /// accountId](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.Builder.html#setAccountId(java.lang.String)).
-  Future<BillingResultWrapper> launchBillingFlow({@required String sku, String oldSku, String accountId}) async {
+  Future<BillingResultWrapper> launchBillingFlow(
+      {@required String sku, String oldSku, String accountId, String isDown}) async {
     assert(sku != null);
     final Map<String, dynamic> arguments = <String, dynamic>{
       'sku': sku,
       'oldSku': oldSku,
       'accountId': accountId,
+      'isDown': isDown,
     };
     return BillingResultWrapper.fromJson(await channel.invokeMapMethod<String, dynamic>(
         'BillingClient#launchBillingFlow(Activity, BillingFlowParams)', arguments));

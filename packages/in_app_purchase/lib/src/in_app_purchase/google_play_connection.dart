@@ -50,9 +50,11 @@ class GooglePlayConnection with WidgetsBindingObserver implements InAppPurchaseC
   @override
   Future<bool> buyNonConsumable({@required PurchaseParam purchaseParam}) async {
     BillingResultWrapper billingResultWrapper = await billingClient.launchBillingFlow(
-        sku: purchaseParam.productDetails.id,
-        oldSku: purchaseParam.oldSku,
-        accountId: purchaseParam.applicationUserName);
+      sku: purchaseParam.productDetails.id,
+      oldSku: purchaseParam.oldSku,
+      accountId: purchaseParam.applicationUserName,
+      isDown: purchaseParam.isDown,
+    );
     return billingResultWrapper.responseCode == BillingResponse.ok;
   }
 
