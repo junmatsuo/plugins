@@ -49,9 +49,6 @@
 }
 
 - (BOOL)addPayment:(SKPayment *)payment {
-  if (self.transactionsSetter[payment.productIdentifier]) {
-    return NO;
-  }
   [self.queue addPayment:payment];
   return YES;
 }
